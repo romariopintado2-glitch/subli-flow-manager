@@ -122,7 +122,8 @@ export const ScheduleView = ({ orders }: ScheduleViewProps) => {
                           <p className="text-xs text-muted-foreground">
                             Iniciado: {processInfo.startTime.toLocaleTimeString('es-ES', { 
                               hour: '2-digit', 
-                              minute: '2-digit' 
+                              minute: '2-digit',
+                              hour12: false
                             })}
                           </p>
                           <p className="text-xs font-medium">
@@ -138,11 +139,13 @@ export const ScheduleView = ({ orders }: ScheduleViewProps) => {
                       <div className="text-right">
                         <p className="text-xs text-muted-foreground">Entrega estimada</p>
                         <p className="text-sm font-medium">
-                          {order.fechaEntregaEstimada.toLocaleDateString('es-ES', {
+                          {order.fechaEntregaEstimada.toLocaleString('es-ES', {
                             day: '2-digit',
                             month: '2-digit',
+                            year: 'numeric',
                             hour: '2-digit',
-                            minute: '2-digit'
+                            minute: '2-digit',
+                            hour12: false
                           })}
                         </p>
                       </div>
@@ -177,7 +180,8 @@ export const ScheduleView = ({ orders }: ScheduleViewProps) => {
                     <p className="text-sm font-medium text-orange-900">
                       {order.fechaEntregaEstimada.toLocaleTimeString('es-ES', {
                         hour: '2-digit',
-                        minute: '2-digit'
+                        minute: '2-digit',
+                        hour12: false
                       })}
                     </p>
                     <Badge 

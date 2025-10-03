@@ -34,6 +34,8 @@ export const useTimeCalculator = () => {
 
   const calculateDeliveryTime = (totalMinutes: number, startDate?: Date) => {
     const start = startDate || new Date();
+    // Reset seconds and milliseconds
+    start.setSeconds(0, 0);
     const deliveryDate = new Date(start);
     
     let remainingMinutes = totalMinutes;

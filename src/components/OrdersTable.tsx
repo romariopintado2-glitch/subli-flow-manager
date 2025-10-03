@@ -177,11 +177,13 @@ export const OrdersTable = ({ orders, onUpdateOrder }: OrdersTableProps) => {
                     <TableCell className="text-sm">{formatItemsDisplay(order.items)}</TableCell>
                     <TableCell className="font-mono text-sm">{formatTime(order.tiempoTotal)}</TableCell>
                     <TableCell className="text-sm">
-                      {order.fechaEntregaEstimada.toLocaleDateString('es-ES', {
+                      {order.fechaEntregaEstimada.toLocaleString('es-ES', {
                         day: '2-digit',
                         month: '2-digit',
+                        year: 'numeric',
                         hour: '2-digit',
-                        minute: '2-digit'
+                        minute: '2-digit',
+                        hour12: false
                       })}
                     </TableCell>
                     <TableCell>{getStatusBadge(order.status)}</TableCell>
