@@ -10,7 +10,12 @@ export const timeData: TimeCalculation = {
   },
   production: {
     polo: {
-      impresion: 8.0,
+      // Cálculo basado en rendimiento por grupos de tallas (5m = 1 hora):
+      // Grupo 1 (4-8): 10 polos/hora = 6 min/polo
+      // Grupo 2 (10-14): 7 polos/hora = 8.57 min/polo  
+      // Grupo 3 (16-XXL): 5 polos/hora = 12 min/polo (margen de seguridad)
+      // Promedio: (6 + 8.57 + 12) / 3 = 8.86 min/polo
+      impresion: 8.9,
       cortado: 1,
       planchado: 2.5,
       control: 1.0,
