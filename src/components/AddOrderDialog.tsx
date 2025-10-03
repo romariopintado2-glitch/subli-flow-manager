@@ -15,7 +15,8 @@ interface AddOrderDialogProps {
 export const AddOrderDialog = ({ onAddOrder }: AddOrderDialogProps) => {
   const [open, setOpen] = useState(false);
   const [cliente, setCliente] = useState('');
-  const [designTime, setDesignTime] = useState(0.5);
+  const [tiempoDiseno, setTiempoDiseno] = useState(0); // in minutes
+  const [tiempoLista, setTiempoLista] = useState(15); // in minutes
   const [items, setItems] = useState<OrderItem[]>([
     { prenda: 'polo', cantidad: 1 }
   ]);
@@ -40,15 +41,18 @@ export const AddOrderDialog = ({ onAddOrder }: AddOrderDialogProps) => {
 
   const handleSubmit = () => {
     if (cliente.trim() && items.length > 0) {
-      onAddOrder(cliente, items, designTime);
+      const totalDesignTimeHours = (tiempoDiseno + tiempoLista) / 60;
+      onAddOrder(cliente, items, totalDesignTimeHours);
       setCliente('');
-      setDesignTime(0.5);
+      setTiempoDiseno(0);
+      setTiempoLista(15);
       setItems([{ prenda: 'polo', cantidad: 1 }]);
       setOpen(false);
     }
   };
 
-  const timeCalculation = calculateOrderTime(items, designTime);
+  const totalDesignTimeHours = (tiempoDiseno + tiempoLista) / 60;
+  const timeCalculation = calculateOrderTime(items, totalDesignTimeHours);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -77,20 +81,46 @@ export const AddOrderDialog = ({ onAddOrder }: AddOrderDialogProps) => {
             />
           </div>
 
-          <div>
-            <Label htmlFor="designTime">Tiempo de Diseño (horas)</Label>
-            <Input
-              id="designTime"
-              type="number"
-              step="0.5"
-              min="0"
-              max="8"
-              value={designTime}
-              onChange={(e) => setDesignTime(parseFloat(e.target.value) || 0)}
-              className="mt-1"
-            />
-            <p className="text-sm text-muted-foreground mt-1">
-              Entre 10 minutos (0.2h) y 2 horas máximo
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="tiempoDiseno">Tiempo de Diseño</Label>
+              <Select
+                value={tiempoDiseno.toString()}
+                onValueChange={(value) => setTiempoDiseno(parseInt(value))}
+              >
+                <SelectTrigger className="mt-1">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="0">0 min (ninguno)</SelectItem>
+                  <SelectItem value="30">30 min</SelectItem>
+                  <SelectItem value="60">1 hora</SelectItem>
+                  <SelectItem value="90">1 hora 30 min</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="tiempoLista">Tiempo de Lista</Label>
+              <Select
+                value={tiempoLista.toString()}
+                onValueChange={(value) => setTiempoLista(parseInt(value))}
+              >
+                <SelectTrigger className="mt-1">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="15">15 min</SelectItem>
+                  <SelectItem value="30">30 min</SelectItem>
+                  <SelectItem value="45">45 min</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="p-3 bg-primary/5 rounded-lg border border-primary/20">
+            <p className="text-sm font-medium">
+              Tiempo Total de Diseño: <span className="font-mono text-primary">{formatTime(tiempoDiseno + tiempoLista)}</span>
             </p>
           </div>
 
