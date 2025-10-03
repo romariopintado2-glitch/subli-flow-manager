@@ -4,9 +4,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AddOrderDialog } from '@/components/AddOrderDialog';
 import { OrdersTable } from '@/components/OrdersTable';
 import { ScheduleView } from '@/components/ScheduleView';
+import { CostsView } from '@/components/CostsView';
 import { Order, OrderItem } from '@/types/sublimation';
 import { useTimeCalculator } from '@/hooks/useTimeCalculator';
-import { BarChart3, Clock, Calendar, Settings } from 'lucide-react';
+import { BarChart3, Clock, Calendar, DollarSign } from 'lucide-react';
 
 const Index = () => {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -60,7 +61,7 @@ const Index = () => {
         </div>
 
         <Tabs defaultValue="orders" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 lg:w-auto lg:grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:grid-cols-4">
             <TabsTrigger value="orders" className="flex items-center gap-2">
               <BarChart3 className="w-4 h-4" />
               Pedidos
@@ -68,6 +69,10 @@ const Index = () => {
             <TabsTrigger value="schedule" className="flex items-center gap-2">
               <Clock className="w-4 h-4" />
               Programación
+            </TabsTrigger>
+            <TabsTrigger value="costs" className="flex items-center gap-2">
+              <DollarSign className="w-4 h-4" />
+              Costos
             </TabsTrigger>
             <TabsTrigger value="calendar" className="flex items-center gap-2">
               <Calendar className="w-4 h-4" />
@@ -81,6 +86,10 @@ const Index = () => {
 
           <TabsContent value="schedule" className="space-y-6">
             <ScheduleView orders={orders} />
+          </TabsContent>
+
+          <TabsContent value="costs" className="space-y-6">
+            <CostsView orders={orders} />
           </TabsContent>
 
           <TabsContent value="calendar" className="space-y-6">
