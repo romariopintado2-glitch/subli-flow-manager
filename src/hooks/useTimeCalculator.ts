@@ -3,7 +3,7 @@ import { OrderItem, WorkSchedule } from '@/types/sublimation';
 import { timeData } from '@/data/timeData';
 
 const workSchedule: WorkSchedule = {
-  startHour: 8,
+  startHour: 9,
   endHour: 18,
   lunchStart: 13,
   lunchEnd: 14

@@ -5,13 +5,17 @@ import { AddOrderDialog } from '@/components/AddOrderDialog';
 import { OrdersTable } from '@/components/OrdersTable';
 import { ScheduleView } from '@/components/ScheduleView';
 import { CostsView } from '@/components/CostsView';
+import { ClientsDatabase } from '@/components/ClientsDatabase';
 import { Order, OrderItem } from '@/types/sublimation';
 import { useTimeCalculator } from '@/hooks/useTimeCalculator';
-import { BarChart3, Clock, Calendar, DollarSign } from 'lucide-react';
+import { usePasswordProtection } from '@/hooks/usePasswordProtection';
+import { PasswordProtect } from '@/components/PasswordProtect';
+import { BarChart3, Clock, Calendar, DollarSign, Users } from 'lucide-react';
 
 const Index = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const { calculateOrderTime, calculateDeliveryTime } = useTimeCalculator();
+  const { isAuthenticated, isLoading, authenticate, logout } = usePasswordProtection();
 
   const handleAddOrder = (cliente: string, items: OrderItem[], designTime: number) => {
     const timeCalc = calculateOrderTime(items, designTime);
@@ -61,7 +65,7 @@ const Index = () => {
         </div>
 
         <Tabs defaultValue="orders" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:grid-cols-5">
             <TabsTrigger value="orders" className="flex items-center gap-2">
               <BarChart3 className="w-4 h-4" />
               Pedidos
@@ -73,6 +77,10 @@ const Index = () => {
             <TabsTrigger value="costs" className="flex items-center gap-2">
               <DollarSign className="w-4 h-4" />
               Costos
+            </TabsTrigger>
+            <TabsTrigger value="clients" className="flex items-center gap-2">
+              <Users className="w-4 h-4" />
+              Clientes
             </TabsTrigger>
             <TabsTrigger value="calendar" className="flex items-center gap-2">
               <Calendar className="w-4 h-4" />
@@ -90,6 +98,17 @@ const Index = () => {
 
           <TabsContent value="costs" className="space-y-6">
             <CostsView orders={orders} />
+          </TabsContent>
+
+          <TabsContent value="clients" className="space-y-6">
+            <PasswordProtect
+              isAuthenticated={isAuthenticated}
+              isLoading={isLoading}
+              onAuthenticate={authenticate}
+              onLogout={logout}
+            >
+              <ClientsDatabase />
+            </PasswordProtect>
           </TabsContent>
 
           <TabsContent value="calendar" className="space-y-6">

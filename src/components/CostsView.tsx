@@ -3,6 +3,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Order } from '@/types/sublimation';
 import { useCostCalculator } from '@/hooks/useCostCalculator';
+import { usePasswordProtection } from '@/hooks/usePasswordProtection';
+import { PasswordProtect } from './PasswordProtect';
 import { DollarSign, TrendingUp, Package } from 'lucide-react';
 
 interface CostsViewProps {
@@ -11,6 +13,7 @@ interface CostsViewProps {
 
 export const CostsView = ({ orders }: CostsViewProps) => {
   const { calculateOrderCost, formatCurrency } = useCostCalculator();
+  const { isAuthenticated, isLoading, authenticate, logout } = usePasswordProtection();
 
   const prendaNames: Record<string, string> = {
     polo: 'Polo',
@@ -48,7 +51,13 @@ export const CostsView = ({ orders }: CostsViewProps) => {
   }, 0);
 
   return (
-    <div className="space-y-6">
+    <PasswordProtect
+      isAuthenticated={isAuthenticated}
+      isLoading={isLoading}
+      onAuthenticate={authenticate}
+      onLogout={logout}
+    >
+      <div className="space-y-6">
       {/* Resumen de Costos */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
@@ -159,6 +168,7 @@ export const CostsView = ({ orders }: CostsViewProps) => {
           </p>
         </CardContent>
       </Card>
-    </div>
+      </div>
+    </PasswordProtect>
   );
 };
