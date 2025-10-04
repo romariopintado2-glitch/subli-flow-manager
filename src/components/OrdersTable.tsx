@@ -3,9 +3,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { CheckCircle, Clock, Play, Pause } from 'lucide-react';
+import { CheckCircle, Clock, Play, Eye, Archive } from 'lucide-react';
 import { Order } from '@/types/sublimation';
 import { useTimeCalculator } from '@/hooks/useTimeCalculator';
+import { OrderDetailsDialog } from './OrderDetailsDialog';
+import { getWeekNumber } from '@/lib/utils';
 
 interface OrdersTableProps {
   orders: Order[];
@@ -14,6 +16,11 @@ interface OrdersTableProps {
 
 export const OrdersTable = ({ orders, onUpdateOrder }: OrdersTableProps) => {
   const { formatTime } = useTimeCalculator();
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+
+  const activeOrders = orders.filter(o => o.status !== 'archived');
+  const archivedOrders = orders.filter(o => o.status === 'archived');
 
   const getStatusBadge = (status: Order['status']) => {
     const statusConfig = {
@@ -21,7 +28,8 @@ export const OrdersTable = ({ orders, onUpdateOrder }: OrdersTableProps) => {
       'in-design': { label: 'En Diseño', className: 'bg-blue-100 text-blue-800 border-blue-200' },
       'in-production': { label: 'En Producción', className: 'bg-purple-100 text-purple-800 border-purple-200' },
       'in-planchado': { label: 'En Planchado', className: 'bg-orange-100 text-orange-800 border-orange-200' },
-      completed: { label: 'Completado', className: 'bg-green-100 text-green-800 border-green-200' }
+      completed: { label: 'Completado', className: 'bg-green-100 text-green-800 border-green-200' },
+      archived: { label: 'Archivado', className: 'bg-gray-100 text-gray-800 border-gray-200' }
     };
 
     const config = statusConfig[status];
@@ -30,6 +38,22 @@ export const OrdersTable = ({ orders, onUpdateOrder }: OrdersTableProps) => {
         {config.label}
       </Badge>
     );
+  };
+
+  const handleArchiveOrder = (orderId: string) => {
+    const order = orders.find(o => o.id === orderId);
+    if (!order) return;
+
+    const weekNumber = getWeekNumber(new Date());
+    onUpdateOrder(orderId, {
+      status: 'archived',
+      semanaArchivo: weekNumber
+    });
+  };
+
+  const handleViewDetails = (order: Order) => {
+    setSelectedOrder(order);
+    setDetailsOpen(true);
   };
 
   const startProcess = (orderId: string, process: keyof Order['procesos']) => {
@@ -74,11 +98,10 @@ export const OrdersTable = ({ orders, onUpdateOrder }: OrdersTableProps) => {
 
     // Check if all processes are completed
     const allCompleted = Object.entries(updatedProcesos).every(([_, proc]) => proc.completado);
-    const newStatus = allCompleted ? 'completed' : order.status;
-
+    
     onUpdateOrder(orderId, {
       procesos: updatedProcesos,
-      status: newStatus
+      status: allCompleted ? 'completed' : order.status
     });
   };
 
@@ -140,65 +163,136 @@ export const OrdersTable = ({ orders, onUpdateOrder }: OrdersTableProps) => {
   };
 
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle className="text-xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-          Gestión de Pedidos
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="min-w-[100px]">Cliente</TableHead>
-                <TableHead className="min-w-[200px]">Prendas</TableHead>
-                <TableHead className="min-w-[80px]">Tiempo Total</TableHead>
-                <TableHead className="min-w-[120px]">Entrega Est.</TableHead>
-                <TableHead className="min-w-[100px]">Estado</TableHead>
-                <TableHead className="min-w-[120px]">Diseño</TableHead>
-                <TableHead className="min-w-[120px]">Impresión</TableHead>
-                <TableHead className="min-w-[120px]">Cortado</TableHead>
-                <TableHead className="min-w-[120px]">Planchado</TableHead>
-                <TableHead className="min-w-[120px]">Control</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {orders.length === 0 ? (
+    <>
+      <Card className="w-full">
+        <CardHeader>
+          <CardTitle className="text-xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+            Gestión de Pedidos
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={10} className="text-center text-muted-foreground py-8">
-                    No hay pedidos registrados
-                  </TableCell>
+                  <TableHead className="min-w-[50px]">Ver</TableHead>
+                  <TableHead className="min-w-[150px]">Pedido</TableHead>
+                  <TableHead className="min-w-[200px]">Prendas</TableHead>
+                  <TableHead className="min-w-[80px]">Tiempo</TableHead>
+                  <TableHead className="min-w-[120px]">Entrega Est.</TableHead>
+                  <TableHead className="min-w-[100px]">Estado</TableHead>
+                  <TableHead className="min-w-[120px]">Diseño</TableHead>
+                  <TableHead className="min-w-[120px]">Impresión</TableHead>
+                  <TableHead className="min-w-[120px]">Cortado</TableHead>
+                  <TableHead className="min-w-[120px]">Planchado</TableHead>
+                  <TableHead className="min-w-[120px]">Control</TableHead>
+                  <TableHead className="min-w-[100px]">Acciones</TableHead>
                 </TableRow>
-              ) : (
-                orders.map((order) => (
-                  <TableRow key={order.id} className="hover:bg-muted/50">
-                    <TableCell className="font-medium">{order.cliente}</TableCell>
-                    <TableCell className="text-sm">{formatItemsDisplay(order.items)}</TableCell>
-                    <TableCell className="font-mono text-sm">{formatTime(order.tiempoTotal)}</TableCell>
-                    <TableCell className="text-sm">
-                      {order.fechaEntregaEstimada.toLocaleString('es-ES', {
-                        day: '2-digit',
-                        month: '2-digit',
-                        year: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        hour12: false
-                      })}
+              </TableHeader>
+              <TableBody>
+                {activeOrders.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={12} className="text-center text-muted-foreground py-8">
+                      No hay pedidos activos
                     </TableCell>
-                    <TableCell>{getStatusBadge(order.status)}</TableCell>
-                    <TableCell>{getProcessButton(order, 'diseno', 'Diseño')}</TableCell>
-                    <TableCell>{getProcessButton(order, 'impresion', 'Impresión')}</TableCell>
-                    <TableCell>{getProcessButton(order, 'cortado', 'Cortado')}</TableCell>
-                    <TableCell>{getProcessButton(order, 'planchado', 'Planchado')}</TableCell>
-                    <TableCell>{getProcessButton(order, 'control', 'Control')}</TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </div>
-      </CardContent>
-    </Card>
+                ) : (
+                  activeOrders.map((order) => (
+                    <TableRow key={order.id} className="hover:bg-muted/50">
+                      <TableCell>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleViewDetails(order)}
+                          className="h-8 w-8 p-0"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </Button>
+                      </TableCell>
+                      <TableCell className="font-medium">{order.nombrePedido}</TableCell>
+                      <TableCell className="text-sm">{formatItemsDisplay(order.items)}</TableCell>
+                      <TableCell className="font-mono text-sm">{formatTime(order.tiempoTotal)}</TableCell>
+                      <TableCell className="text-sm">
+                        {order.fechaEntregaEstimada.toLocaleString('es-ES', {
+                          day: '2-digit',
+                          month: '2-digit',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                          hour12: false
+                        })}
+                      </TableCell>
+                      <TableCell>{getStatusBadge(order.status)}</TableCell>
+                      <TableCell>{getProcessButton(order, 'diseno', 'Diseño')}</TableCell>
+                      <TableCell>{getProcessButton(order, 'impresion', 'Impresión')}</TableCell>
+                      <TableCell>{getProcessButton(order, 'cortado', 'Cortado')}</TableCell>
+                      <TableCell>{getProcessButton(order, 'planchado', 'Planchado')}</TableCell>
+                      <TableCell>{getProcessButton(order, 'control', 'Control')}</TableCell>
+                      <TableCell>
+                        {order.status === 'completed' && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleArchiveOrder(order.id)}
+                            className="h-8 px-2 text-xs"
+                          >
+                            <Archive className="w-3 h-3 mr-1" />
+                            Archivar
+                          </Button>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+
+          {archivedOrders.length > 0 && (
+            <div className="mt-8">
+              <h3 className="text-lg font-semibold mb-4">Pedidos Archivados</h3>
+              <div className="space-y-2">
+                {Object.entries(
+                  archivedOrders.reduce((acc, order) => {
+                    const week = order.semanaArchivo || 'Sin semana';
+                    if (!acc[week]) acc[week] = [];
+                    acc[week].push(order);
+                    return acc;
+                  }, {} as Record<string, Order[]>)
+                ).map(([week, weekOrders]) => (
+                  <div key={week} className="p-4 bg-muted/30 rounded-lg">
+                    <h4 className="font-medium mb-2">{week}</h4>
+                    <div className="space-y-1 text-sm">
+                      {weekOrders.map(order => (
+                        <div key={order.id} className="flex items-center justify-between p-2 hover:bg-muted/50 rounded">
+                          <span>{order.nombrePedido}</span>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleViewDetails(order)}
+                            className="h-6 px-2"
+                          >
+                            <Eye className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {selectedOrder && (
+        <OrderDetailsDialog
+          order={selectedOrder}
+          open={detailsOpen}
+          onOpenChange={setDetailsOpen}
+          onUpdateOrder={onUpdateOrder}
+        />
+      )}
+    </>
   );
 };

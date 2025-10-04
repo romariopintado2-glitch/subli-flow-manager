@@ -17,19 +17,33 @@ const Index = () => {
   const { calculateOrderTime, calculateDeliveryTime } = useTimeCalculator();
   const { isAuthenticated, isLoading, authenticate, logout } = usePasswordProtection();
 
-  const handleAddOrder = (cliente: string, items: OrderItem[], designTime: number) => {
+  const handleAddOrder = (nombrePedido: string, clienteId: string | undefined, items: OrderItem[], designTime: number, diseñador?: string) => {
     const timeCalc = calculateOrderTime(items, designTime);
     const deliveryDate = calculateDeliveryTime(timeCalc.totalTime);
     
+    // Get client name if clienteId is provided
+    let clienteNombre = 'Sin asignar';
+    if (clienteId) {
+      const clientesStorage = localStorage.getItem('clientes');
+      if (clientesStorage) {
+        const clientes = JSON.parse(clientesStorage);
+        const cliente = clientes.find((c: any) => c.id === clienteId);
+        if (cliente) clienteNombre = cliente.nombre;
+      }
+    }
+    
     const newOrder: Order = {
       id: crypto.randomUUID(),
-      cliente,
+      nombrePedido,
+      clienteId,
+      cliente: clienteNombre,
       items,
       tiempoDiseno: designTime,
       tiempoTotal: timeCalc.totalTime,
       fechaCreacion: new Date(),
       fechaEntregaEstimada: deliveryDate,
       status: 'pending',
+      diseñador,
       procesos: {
         diseno: { completado: false },
         impresion: { completado: false },

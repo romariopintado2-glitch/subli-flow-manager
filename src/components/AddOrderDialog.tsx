@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,15 +6,19 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Trash2 } from 'lucide-react';
 import { OrderItem } from '@/types/sublimation';
+import { Cliente } from '@/types/cliente';
 import { useTimeCalculator } from '@/hooks/useTimeCalculator';
 
 interface AddOrderDialogProps {
-  onAddOrder: (cliente: string, items: OrderItem[], designTime: number) => void;
+  onAddOrder: (nombrePedido: string, clienteId: string | undefined, items: OrderItem[], designTime: number, diseñador?: string) => void;
 }
 
 export const AddOrderDialog = ({ onAddOrder }: AddOrderDialogProps) => {
   const [open, setOpen] = useState(false);
-  const [cliente, setCliente] = useState('');
+  const [nombrePedido, setNombrePedido] = useState('');
+  const [clienteId, setClienteId] = useState<string>('');
+  const [diseñador, setDiseñador] = useState('');
+  const [clientes, setClientes] = useState<Cliente[]>([]);
   const [tiempoDiseno, setTiempoDiseno] = useState(0); // in minutes
   const [tiempoLista, setTiempoLista] = useState(15); // in minutes
   const [items, setItems] = useState<OrderItem[]>([
@@ -22,6 +26,13 @@ export const AddOrderDialog = ({ onAddOrder }: AddOrderDialogProps) => {
   ]);
   
   const { calculateOrderTime, formatTime } = useTimeCalculator();
+
+  useEffect(() => {
+    const clientesStorage = localStorage.getItem('clientes');
+    if (clientesStorage) {
+      setClientes(JSON.parse(clientesStorage));
+    }
+  }, [open]);
 
   const addItem = () => {
     setItems([...items, { prenda: 'polo', cantidad: 1 }]);
@@ -40,10 +51,12 @@ export const AddOrderDialog = ({ onAddOrder }: AddOrderDialogProps) => {
   };
 
   const handleSubmit = () => {
-    if (cliente.trim() && items.length > 0) {
+    if (nombrePedido.trim() && items.length > 0) {
       const totalDesignTimeHours = (tiempoDiseno + tiempoLista) / 60;
-      onAddOrder(cliente, items, totalDesignTimeHours);
-      setCliente('');
+      onAddOrder(nombrePedido, clienteId || undefined, items, totalDesignTimeHours, diseñador || undefined);
+      setNombrePedido('');
+      setClienteId('');
+      setDiseñador('');
       setTiempoDiseno(0);
       setTiempoLista(15);
       setItems([{ prenda: 'polo', cantidad: 1 }]);
@@ -71,14 +84,44 @@ export const AddOrderDialog = ({ onAddOrder }: AddOrderDialogProps) => {
         
         <div className="space-y-6">
           <div>
-            <Label htmlFor="cliente">Cliente</Label>
+            <Label htmlFor="nombrePedido">Nombre del Pedido</Label>
             <Input
-              id="cliente"
-              value={cliente}
-              onChange={(e) => setCliente(e.target.value)}
-              placeholder="Nombre del cliente"
+              id="nombrePedido"
+              value={nombrePedido}
+              onChange={(e) => setNombrePedido(e.target.value)}
+              placeholder="Ej: Uniformes Colegio San Juan"
               className="mt-1"
             />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="cliente">Asignar Cliente</Label>
+              <Select value={clienteId} onValueChange={setClienteId}>
+                <SelectTrigger className="mt-1">
+                  <SelectValue placeholder="Seleccionar cliente (opcional)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Sin asignar</SelectItem>
+                  {clientes.map((cliente) => (
+                    <SelectItem key={cliente.id} value={cliente.id}>
+                      {cliente.nombre}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="diseñador">Diseñador</Label>
+              <Input
+                id="diseñador"
+                value={diseñador}
+                onChange={(e) => setDiseñador(e.target.value)}
+                placeholder="Nombre del diseñador (opcional)"
+                className="mt-1"
+              />
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -202,7 +245,7 @@ export const AddOrderDialog = ({ onAddOrder }: AddOrderDialogProps) => {
             <Button variant="outline" onClick={() => setOpen(false)}>
               Cancelar
             </Button>
-            <Button onClick={handleSubmit} disabled={!cliente.trim()}>
+            <Button onClick={handleSubmit} disabled={!nombrePedido.trim()}>
               Crear Pedido
             </Button>
           </div>

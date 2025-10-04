@@ -22,13 +22,18 @@ export interface OrderItem {
 
 export interface Order {
   id: string;
-  cliente: string;
+  nombrePedido: string;
+  clienteId?: string;
+  cliente: string; // Nombre del cliente para retrocompatibilidad
   items: OrderItem[];
   tiempoDiseno: number; // in hours
   tiempoTotal: number; // in minutes
   fechaCreacion: Date;
   fechaEntregaEstimada: Date;
-  status: 'pending' | 'in-design' | 'in-production' | 'in-planchado' | 'completed';
+  status: 'pending' | 'in-design' | 'in-production' | 'in-planchado' | 'completed' | 'archived';
+  descripcionPedido?: string;
+  diseñador?: string;
+  semanaArchivo?: string; // Formato: "2025-W01"
   procesos: {
     diseno: { inicio?: Date; fin?: Date; completado: boolean; };
     impresion: { inicio?: Date; fin?: Date; completado: boolean; };
