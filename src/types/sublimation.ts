@@ -34,6 +34,9 @@ export interface Order {
   descripcionPedido?: string;
   diseñador?: string;
   semanaArchivo?: string; // Formato: "2025-W01"
+  imagenDiseño?: string; // Base64 or URL
+  fotoLista?: string; // Base64 or URL
+  archivosImpresion?: string[]; // Array of Base64 or URLs
   procesos: {
     diseno: { inicio?: Date; fin?: Date; completado: boolean; };
     impresion: { inicio?: Date; fin?: Date; completado: boolean; };

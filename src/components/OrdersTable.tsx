@@ -96,12 +96,37 @@ export const OrdersTable = ({ orders, onUpdateOrder }: OrdersTableProps) => {
       }
     };
 
+    // Recalculate delivery time based on remaining processes
+    const { calculateOrderTime, calculateDeliveryTime } = useTimeCalculator();
+    
+    // Calculate remaining time from uncompleted processes
+    let remainingTime = 0;
+    const processOrder = ['diseno', 'impresion', 'cortado', 'planchado', 'control'] as const;
+    
+    for (const proc of processOrder) {
+      if (!updatedProcesos[proc].completado) {
+        // Add time for this process based on order items
+        if (proc === 'diseno') {
+          remainingTime += order.tiempoDiseno * 60;
+        } else {
+          // Calculate production time for remaining processes
+          const timeCalc = calculateOrderTime(order.items, 0);
+          remainingTime += timeCalc.productionTime / 4; // Approximate division
+        }
+      }
+    }
+
+    const newDeliveryDate = remainingTime > 0 
+      ? calculateDeliveryTime(remainingTime)
+      : order.fechaEntregaEstimada;
+
     // Check if all processes are completed
     const allCompleted = Object.entries(updatedProcesos).every(([_, proc]) => proc.completado);
     
     onUpdateOrder(orderId, {
       procesos: updatedProcesos,
-      status: allCompleted ? 'completed' : order.status
+      status: allCompleted ? 'completed' : order.status,
+      fechaEntregaEstimada: newDeliveryDate
     });
   };
 

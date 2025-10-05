@@ -107,8 +107,9 @@ export const ScheduleView = ({ orders }: ScheduleViewProps) => {
                 return (
                   <div key={order.id} className="flex items-center justify-between p-4 border rounded-lg bg-gradient-to-r from-card to-muted/30">
                     <div className="flex-1">
-                      <h4 className="font-medium">{order.cliente}</h4>
-                      <p className="text-sm text-muted-foreground">
+                      <h4 className="font-semibold text-lg">{order.nombrePedido}</h4>
+                      <p className="text-xs text-muted-foreground">Cliente: {order.cliente}</p>
+                      <p className="text-sm text-muted-foreground mt-1">
                         {order.items.map(item => `${item.cantidad} ${item.prenda}`).join(', ')}
                       </p>
                     </div>
@@ -171,8 +172,9 @@ export const ScheduleView = ({ orders }: ScheduleViewProps) => {
               {todayOrders.map(order => (
                 <div key={order.id} className="flex items-center justify-between p-3 border rounded-lg bg-orange-50 border-orange-200">
                   <div>
-                    <h4 className="font-medium text-orange-900">{order.cliente}</h4>
-                    <p className="text-sm text-orange-700">
+                    <h4 className="font-semibold text-orange-900">{order.nombrePedido}</h4>
+                    <p className="text-xs text-orange-700">Cliente: {order.cliente}</p>
+                    <p className="text-sm text-orange-700 mt-1">
                       {order.items.map(item => `${item.cantidad} ${item.prenda}`).join(', ')}
                     </p>
                   </div>

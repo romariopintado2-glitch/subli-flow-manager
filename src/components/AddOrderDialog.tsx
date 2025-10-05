@@ -4,10 +4,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Trash2 } from 'lucide-react';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Plus, Trash2, Check, ChevronsUpDown } from 'lucide-react';
 import { OrderItem } from '@/types/sublimation';
 import { Cliente } from '@/types/cliente';
 import { useTimeCalculator } from '@/hooks/useTimeCalculator';
+import { cn } from '@/lib/utils';
 
 interface AddOrderDialogProps {
   onAddOrder: (nombrePedido: string, clienteId: string | undefined, items: OrderItem[], designTime: number, diseñador?: string) => void;
@@ -24,6 +27,7 @@ export const AddOrderDialog = ({ onAddOrder }: AddOrderDialogProps) => {
   const [items, setItems] = useState<OrderItem[]>([
     { prenda: 'polo', cantidad: 1 }
   ]);
+  const [clienteSearchOpen, setClienteSearchOpen] = useState(false);
   
   const { calculateOrderTime, formatTime } = useTimeCalculator();
 
@@ -96,20 +100,63 @@ export const AddOrderDialog = ({ onAddOrder }: AddOrderDialogProps) => {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="cliente">Asignar Cliente</Label>
-              <Select value={clienteId} onValueChange={setClienteId}>
-                <SelectTrigger className="mt-1">
-                  <SelectValue placeholder="Seleccionar cliente (opcional)" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Sin asignar</SelectItem>
-                  {clientes.map((cliente) => (
-                    <SelectItem key={cliente.id} value={cliente.id}>
-                      {cliente.nombre}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label>Asignar Cliente</Label>
+              <Popover open={clienteSearchOpen} onOpenChange={setClienteSearchOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={clienteSearchOpen}
+                    className="w-full justify-between mt-1"
+                  >
+                    {clienteId && clienteId !== 'none'
+                      ? clientes.find((c) => c.id === clienteId)?.nombre
+                      : "Seleccionar cliente..."}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-full p-0">
+                  <Command>
+                    <CommandInput placeholder="Buscar cliente..." />
+                    <CommandEmpty>No se encontró el cliente.</CommandEmpty>
+                    <CommandGroup>
+                      <CommandItem
+                        value="none"
+                        onSelect={() => {
+                          setClienteId('none');
+                          setClienteSearchOpen(false);
+                        }}
+                      >
+                        <Check
+                          className={cn(
+                            "mr-2 h-4 w-4",
+                            clienteId === 'none' ? "opacity-100" : "opacity-0"
+                          )}
+                        />
+                        Sin asignar
+                      </CommandItem>
+                      {clientes.map((cliente) => (
+                        <CommandItem
+                          key={cliente.id}
+                          value={cliente.nombre.toLowerCase()}
+                          onSelect={() => {
+                            setClienteId(cliente.id);
+                            setClienteSearchOpen(false);
+                          }}
+                        >
+                          <Check
+                            className={cn(
+                              "mr-2 h-4 w-4",
+                              clienteId === cliente.id ? "opacity-100" : "opacity-0"
+                            )}
+                          />
+                          {cliente.nombre} - {cliente.distrito}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </Command>
+                </PopoverContent>
+              </Popover>
             </div>
 
             <div>

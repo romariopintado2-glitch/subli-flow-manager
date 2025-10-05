@@ -8,7 +8,8 @@ import { Order } from '@/types/sublimation';
 import { Cliente } from '@/types/cliente';
 import { Badge } from '@/components/ui/badge';
 import { useTimeCalculator } from '@/hooks/useTimeCalculator';
-import { Calendar, User, MapPin, Phone, FileText, Pencil } from 'lucide-react';
+import { Calendar, User, MapPin, Phone, FileText, Pencil, Upload, X, Image as ImageIcon } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 interface OrderDetailsDialogProps {
   order: Order;
@@ -19,6 +20,7 @@ interface OrderDetailsDialogProps {
 
 export const OrderDetailsDialog = ({ order, open, onOpenChange, onUpdateOrder }: OrderDetailsDialogProps) => {
   const { formatTime } = useTimeCalculator();
+  const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [descripcion, setDescripcion] = useState(order.descripcionPedido || '');
   const [cliente, setCliente] = useState<Cliente | null>(null);
@@ -37,6 +39,41 @@ export const OrderDetailsDialog = ({ order, open, onOpenChange, onUpdateOrder }:
   const handleSaveDescripcion = () => {
     onUpdateOrder(order.id, { descripcionPedido: descripcion });
     setIsEditing(false);
+  };
+
+  const handleFileUpload = (file: File, type: 'fotoLista' | 'archivoImpresion') => {
+    if (!file.type.startsWith('image/') && !file.type.startsWith('application/')) {
+      toast({
+        title: 'Error',
+        description: 'Por favor selecciona un archivo válido',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      if (type === 'fotoLista') {
+        onUpdateOrder(order.id, { fotoLista: reader.result as string });
+      } else {
+        const currentFiles = order.archivosImpresion || [];
+        onUpdateOrder(order.id, { archivosImpresion: [...currentFiles, reader.result as string] });
+      }
+      toast({
+        title: 'Archivo cargado',
+        description: 'El archivo se ha guardado correctamente'
+      });
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const removeFile = (type: 'fotoLista' | 'archivoImpresion', index?: number) => {
+    if (type === 'fotoLista') {
+      onUpdateOrder(order.id, { fotoLista: undefined });
+    } else if (index !== undefined) {
+      const currentFiles = order.archivosImpresion || [];
+      onUpdateOrder(order.id, { archivosImpresion: currentFiles.filter((_, i) => i !== index) });
+    }
   };
 
   const formatItemsDisplay = (items: Order['items']) => {
@@ -145,14 +182,13 @@ export const OrderDetailsDialog = ({ order, open, onOpenChange, onUpdateOrder }:
                   <Phone className="w-4 h-4 text-muted-foreground" />
                   <div>
                     <p className="text-muted-foreground">WhatsApp</p>
-                    <a 
-                      href={`https://wa.me/${cliente.celular.replace(/\D/g, '')}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="font-medium text-primary hover:underline"
+                    <Button
+                      variant="link"
+                      className="h-auto p-0 font-medium text-primary hover:underline"
+                      onClick={() => window.open(`https://wa.me/${cliente.celular.replace(/\D/g, '')}`, '_blank')}
                     >
                       {cliente.celular}
-                    </a>
+                    </Button>
                   </div>
                 </div>
                 
@@ -239,6 +275,96 @@ export const OrderDetailsDialog = ({ order, open, onOpenChange, onUpdateOrder }:
                 {order.descripcionPedido || 'Sin descripción'}
               </p>
             )}
+          </div>
+
+          {/* Archivos */}
+          <div className="p-4 bg-muted/30 rounded-lg space-y-4">
+            <h3 className="font-semibold flex items-center gap-2">
+              <FileText className="w-4 h-4" />
+              Archivos
+            </h3>
+
+            {/* Foto de Lista */}
+            <div className="space-y-2">
+              <Label>Foto de Lista del Pedido</Label>
+              {order.fotoLista ? (
+                <div className="relative group">
+                  <img 
+                    src={order.fotoLista} 
+                    alt="Lista del pedido"
+                    className="w-full max-h-48 object-contain rounded-lg border"
+                  />
+                  <Button
+                    size="icon"
+                    variant="destructive"
+                    className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={() => removeFile('fotoLista')}
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+              ) : (
+                <Label htmlFor="foto-lista" className="cursor-pointer">
+                  <div className="flex items-center justify-center gap-2 p-4 border-2 border-dashed rounded-lg hover:bg-muted/50 transition-colors">
+                    <Upload className="w-4 h-4" />
+                    <span className="text-sm">Subir foto de lista</span>
+                  </div>
+                </Label>
+              )}
+              <Input
+                id="foto-lista"
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleFileUpload(file, 'fotoLista');
+                }}
+              />
+            </div>
+
+            {/* Archivos de Impresión */}
+            <div className="space-y-2">
+              <Label>Archivos para Impresión</Label>
+              {order.archivosImpresion && order.archivosImpresion.length > 0 && (
+                <div className="grid grid-cols-3 gap-2 mb-2">
+                  {order.archivosImpresion.map((archivo, index) => (
+                    <div key={index} className="relative group">
+                      <img 
+                        src={archivo}
+                        alt={`Archivo ${index + 1}`}
+                        className="w-full h-24 object-cover rounded-lg border"
+                      />
+                      <Button
+                        size="icon"
+                        variant="destructive"
+                        className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={() => removeFile('archivoImpresion', index)}
+                      >
+                        <X className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <Label htmlFor="archivos-impresion" className="cursor-pointer">
+                <div className="flex items-center justify-center gap-2 p-4 border-2 border-dashed rounded-lg hover:bg-muted/50 transition-colors">
+                  <Upload className="w-4 h-4" />
+                  <span className="text-sm">Subir archivos de impresión</span>
+                </div>
+              </Label>
+              <Input
+                id="archivos-impresion"
+                type="file"
+                accept="image/*"
+                multiple
+                className="hidden"
+                onChange={(e) => {
+                  const files = Array.from(e.target.files || []);
+                  files.forEach(file => handleFileUpload(file, 'archivoImpresion'));
+                }}
+              />
+            </div>
           </div>
 
           {/* Estado de Procesos */}
