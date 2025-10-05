@@ -32,9 +32,17 @@ export const AddOrderDialog = ({ onAddOrder }: AddOrderDialogProps) => {
   const { calculateOrderTime, formatTime } = useTimeCalculator();
 
   useEffect(() => {
-    const clientesStorage = localStorage.getItem('clientes');
-    if (clientesStorage) {
-      setClientes(JSON.parse(clientesStorage));
+    if (open) {
+      const clientesStorage = localStorage.getItem('clientes');
+      if (clientesStorage) {
+        try {
+          const parsedClientes = JSON.parse(clientesStorage);
+          setClientes(parsedClientes);
+        } catch (error) {
+          console.error('Error loading clients:', error);
+          setClientes([]);
+        }
+      }
     }
   }, [open]);
 

@@ -6,12 +6,12 @@ import { OrdersTable } from '@/components/OrdersTable';
 import { ScheduleView } from '@/components/ScheduleView';
 import { CostsView } from '@/components/CostsView';
 import { ClientsDatabase } from '@/components/ClientsDatabase';
-import { DesignView } from '@/components/DesignView';
+import { InventoryView } from '@/components/InventoryView';
 import { Order, OrderItem } from '@/types/sublimation';
 import { useTimeCalculator } from '@/hooks/useTimeCalculator';
 import { usePasswordProtection } from '@/hooks/usePasswordProtection';
 import { PasswordProtect } from '@/components/PasswordProtect';
-import { BarChart3, Clock, Calendar, DollarSign, Users, Palette } from 'lucide-react';
+import { BarChart3, Clock, Calendar, DollarSign, Users, Package } from 'lucide-react';
 
 const Index = () => {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -85,10 +85,6 @@ const Index = () => {
               <BarChart3 className="w-4 h-4" />
               Pedidos
             </TabsTrigger>
-            <TabsTrigger value="designs" className="flex items-center gap-2">
-              <Palette className="w-4 h-4" />
-              Diseños
-            </TabsTrigger>
             <TabsTrigger value="schedule" className="flex items-center gap-2">
               <Clock className="w-4 h-4" />
               Programación
@@ -96,6 +92,10 @@ const Index = () => {
             <TabsTrigger value="costs" className="flex items-center gap-2">
               <DollarSign className="w-4 h-4" />
               Costos
+            </TabsTrigger>
+            <TabsTrigger value="inventory" className="flex items-center gap-2">
+              <Package className="w-4 h-4" />
+              Inventario
             </TabsTrigger>
             <TabsTrigger value="clients" className="flex items-center gap-2">
               <Users className="w-4 h-4" />
@@ -111,16 +111,16 @@ const Index = () => {
             <OrdersTable orders={orders} onUpdateOrder={handleUpdateOrder} />
           </TabsContent>
 
-          <TabsContent value="designs" className="space-y-6">
-            <DesignView orders={orders} onUpdateOrder={handleUpdateOrder} />
-          </TabsContent>
-
           <TabsContent value="schedule" className="space-y-6">
             <ScheduleView orders={orders} />
           </TabsContent>
 
           <TabsContent value="costs" className="space-y-6">
             <CostsView orders={orders} />
+          </TabsContent>
+
+          <TabsContent value="inventory" className="space-y-6">
+            <InventoryView />
           </TabsContent>
 
           <TabsContent value="clients" className="space-y-6">
