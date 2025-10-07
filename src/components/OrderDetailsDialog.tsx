@@ -8,7 +8,7 @@ import { Order } from '@/types/sublimation';
 import { Cliente } from '@/types/cliente';
 import { Badge } from '@/components/ui/badge';
 import { useTimeCalculator } from '@/hooks/useTimeCalculator';
-import { Calendar, User, MapPin, Phone, FileText, Pencil, Upload, X, Image as ImageIcon } from 'lucide-react';
+import { Calendar, User, MapPin, Phone, FileText, Pencil, Upload, X, Image as ImageIcon, Eye, MessageCircle, Plus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface OrderDetailsDialogProps {
@@ -24,6 +24,9 @@ export const OrderDetailsDialog = ({ order, open, onOpenChange, onUpdateOrder }:
   const [isEditing, setIsEditing] = useState(false);
   const [descripcion, setDescripcion] = useState(order.descripcionPedido || '');
   const [cliente, setCliente] = useState<Cliente | null>(null);
+  const [imageViewOpen, setImageViewOpen] = useState(false);
+  const [linkImpresion, setLinkImpresion] = useState('');
+  const [descripcionLink, setDescripcionLink] = useState('');
 
   useEffect(() => {
     if (order.clienteId) {
@@ -41,11 +44,11 @@ export const OrderDetailsDialog = ({ order, open, onOpenChange, onUpdateOrder }:
     setIsEditing(false);
   };
 
-  const handleFileUpload = (file: File, type: 'fotoLista' | 'archivoImpresion') => {
-    if (!file.type.startsWith('image/') && !file.type.startsWith('application/')) {
+  const handleFileUpload = (file: File, type: 'fotoLista') => {
+    if (!file.type.startsWith('image/')) {
       toast({
         title: 'Error',
-        description: 'Por favor selecciona un archivo válido',
+        description: 'Por favor selecciona una imagen válida',
         variant: 'destructive'
       });
       return;
@@ -53,18 +56,34 @@ export const OrderDetailsDialog = ({ order, open, onOpenChange, onUpdateOrder }:
 
     const reader = new FileReader();
     reader.onloadend = () => {
-      if (type === 'fotoLista') {
-        onUpdateOrder(order.id, { fotoLista: reader.result as string });
-      } else {
-        const currentFiles = order.archivosImpresion || [];
-        onUpdateOrder(order.id, { archivosImpresion: [...currentFiles, reader.result as string] });
-      }
+      onUpdateOrder(order.id, { fotoLista: reader.result as string });
       toast({
         title: 'Archivo cargado',
-        description: 'El archivo se ha guardado correctamente'
+        description: 'La foto de lista se ha guardado correctamente'
       });
     };
     reader.readAsDataURL(file);
+  };
+
+  const handleAddLinkImpresion = () => {
+    if (!linkImpresion.trim()) return;
+    
+    const newLink = {
+      url: linkImpresion,
+      descripcion: descripcionLink || 'Sin descripción'
+    };
+    
+    const currentLinks = order.archivosImpresion || [];
+    onUpdateOrder(order.id, { 
+      archivosImpresion: [...currentLinks, JSON.stringify(newLink)] 
+    });
+    
+    setLinkImpresion('');
+    setDescripcionLink('');
+    toast({
+      title: 'Link añadido',
+      description: 'El link de impresión se ha guardado correctamente'
+    });
   };
 
   const removeFile = (type: 'fotoLista' | 'archivoImpresion', index?: number) => {
@@ -167,10 +186,21 @@ export const OrderDetailsDialog = ({ order, open, onOpenChange, onUpdateOrder }:
           {/* Información del Cliente */}
           {cliente && (
             <div className="p-4 bg-primary/5 rounded-lg border border-primary/20 space-y-3">
-              <h3 className="font-semibold flex items-center gap-2">
-                <User className="w-4 h-4" />
-                Información del Cliente
-              </h3>
+              <div className="flex items-center justify-between">
+                <h3 className="font-semibold flex items-center gap-2">
+                  <User className="w-4 h-4" />
+                  Información del Cliente
+                </h3>
+                <Button
+                  size="sm"
+                  variant="default"
+                  className="gap-2"
+                  onClick={() => window.open(`https://wa.me/${cliente.celular.replace(/\D/g, '')}`, '_blank')}
+                >
+                  <MessageCircle className="w-4 h-4" />
+                  WhatsApp
+                </Button>
+              </div>
               
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
@@ -181,14 +211,8 @@ export const OrderDetailsDialog = ({ order, open, onOpenChange, onUpdateOrder }:
                 <div className="flex items-center gap-2">
                   <Phone className="w-4 h-4 text-muted-foreground" />
                   <div>
-                    <p className="text-muted-foreground">WhatsApp</p>
-                    <Button
-                      variant="link"
-                      className="h-auto p-0 font-medium text-primary hover:underline"
-                      onClick={() => window.open(`https://wa.me/${cliente.celular.replace(/\D/g, '')}`, '_blank')}
-                    >
-                      {cliente.celular}
-                    </Button>
+                    <p className="text-muted-foreground">Teléfono</p>
+                    <p className="font-medium">{cliente.celular}</p>
                   </div>
                 </div>
                 
@@ -292,16 +316,31 @@ export const OrderDetailsDialog = ({ order, open, onOpenChange, onUpdateOrder }:
                   <img 
                     src={order.fotoLista} 
                     alt="Lista del pedido"
-                    className="w-full max-h-48 object-contain rounded-lg border"
+                    className="w-full max-h-48 object-contain rounded-lg border cursor-pointer"
+                    onClick={() => setImageViewOpen(true)}
                   />
-                  <Button
-                    size="icon"
-                    variant="destructive"
-                    className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                    onClick={() => removeFile('fotoLista')}
-                  >
-                    <X className="w-4 h-4" />
-                  </Button>
+                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center gap-2">
+                    <Button
+                      size="icon"
+                      variant="secondary"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setImageViewOpen(true);
+                      }}
+                    >
+                      <Eye className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="destructive"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeFile('fotoLista');
+                      }}
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
               ) : (
                 <Label htmlFor="foto-lista" className="cursor-pointer">
@@ -323,49 +362,94 @@ export const OrderDetailsDialog = ({ order, open, onOpenChange, onUpdateOrder }:
               />
             </div>
 
-            {/* Archivos de Impresión */}
-            <div className="space-y-2">
+            {/* Archivos de Impresión - Links */}
+            <div className="space-y-3">
               <Label>Archivos para Impresión</Label>
+              
               {order.archivosImpresion && order.archivosImpresion.length > 0 && (
-                <div className="grid grid-cols-3 gap-2 mb-2">
-                  {order.archivosImpresion.map((archivo, index) => (
-                    <div key={index} className="relative group">
-                      <img 
-                        src={archivo}
-                        alt={`Archivo ${index + 1}`}
-                        className="w-full h-24 object-cover rounded-lg border"
-                      />
-                      <Button
-                        size="icon"
-                        variant="destructive"
-                        className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                        onClick={() => removeFile('archivoImpresion', index)}
-                      >
-                        <X className="w-3 h-3" />
-                      </Button>
-                    </div>
-                  ))}
+                <div className="space-y-2 mb-3">
+                  {order.archivosImpresion.map((archivoStr, index) => {
+                    try {
+                      const archivo = JSON.parse(archivoStr);
+                      return (
+                        <div key={index} className="flex items-center gap-2 p-3 border rounded-lg bg-card">
+                          <div className="flex-1">
+                            <a 
+                              href={archivo.url} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-primary hover:underline font-medium text-sm break-all"
+                            >
+                              {archivo.url}
+                            </a>
+                            <p className="text-xs text-muted-foreground mt-1">{archivo.descripcion}</p>
+                          </div>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            onClick={() => removeFile('archivoImpresion', index)}
+                            className="h-8 w-8 text-destructive hover:text-destructive"
+                          >
+                            <X className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      );
+                    } catch (error) {
+                      return null;
+                    }
+                  })}
                 </div>
               )}
-              <Label htmlFor="archivos-impresion" className="cursor-pointer">
-                <div className="flex items-center justify-center gap-2 p-4 border-2 border-dashed rounded-lg hover:bg-muted/50 transition-colors">
-                  <Upload className="w-4 h-4" />
-                  <span className="text-sm">Subir archivos de impresión</span>
+
+              <div className="space-y-3 p-4 border-2 border-dashed rounded-lg">
+                <div>
+                  <Label htmlFor="link-impresion">Link del Archivo</Label>
+                  <Input
+                    id="link-impresion"
+                    value={linkImpresion}
+                    onChange={(e) => setLinkImpresion(e.target.value)}
+                    placeholder="https://drive.google.com/..."
+                    className="mt-1"
+                  />
                 </div>
-              </Label>
-              <Input
-                id="archivos-impresion"
-                type="file"
-                accept="image/*"
-                multiple
-                className="hidden"
-                onChange={(e) => {
-                  const files = Array.from(e.target.files || []);
-                  files.forEach(file => handleFileUpload(file, 'archivoImpresion'));
-                }}
-              />
+                <div>
+                  <Label htmlFor="descripcion-link">Descripción</Label>
+                  <Input
+                    id="descripcion-link"
+                    value={descripcionLink}
+                    onChange={(e) => setDescripcionLink(e.target.value)}
+                    placeholder="Ej: Diseño frontal, Logo grande, etc."
+                    className="mt-1"
+                  />
+                </div>
+                <Button 
+                  onClick={handleAddLinkImpresion} 
+                  disabled={!linkImpresion.trim()}
+                  className="w-full"
+                  size="sm"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Añadir Link
+                </Button>
+              </div>
             </div>
           </div>
+
+          {/* Image View Dialog */}
+          <Dialog open={imageViewOpen} onOpenChange={setImageViewOpen}>
+            <DialogContent className="max-w-4xl">
+              <DialogHeader>
+                <DialogTitle>Foto de Lista del Pedido</DialogTitle>
+              </DialogHeader>
+              {order.fotoLista && (
+                <img 
+                  src={order.fotoLista} 
+                  alt="Lista del pedido"
+                  className="w-full h-auto max-h-[80vh] object-contain"
+                />
+              )}
+            </DialogContent>
+          </Dialog>
 
           {/* Estado de Procesos */}
           <div className="p-4 bg-muted/30 rounded-lg space-y-3">

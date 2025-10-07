@@ -273,9 +273,9 @@ export const InventoryView = () => {
                       id={`tinta-${tinta.color}`}
                       type="number"
                       min="0"
-                      step="0.1"
+                      step="1"
                       value={tinta.cantidad}
-                      onChange={(e) => updateTintaCantidad(tinta.color, parseFloat(e.target.value) || 0)}
+                      onChange={(e) => updateTintaCantidad(tinta.color, parseInt(e.target.value) || 0)}
                       className="mt-1"
                     />
                   </div>

@@ -1,6 +1,5 @@
-import { useState } from 'react';
-import { OrderItem, WorkSchedule } from '@/types/sublimation';
-import { timeData } from '@/data/timeData';
+import { OrderItem, WorkSchedule, TimeCalculation } from '@/types/sublimation';
+import { timeData as defaultTimeData } from '@/data/timeData';
 
 const workSchedule: WorkSchedule = {
   startHour: 9,
@@ -10,9 +9,23 @@ const workSchedule: WorkSchedule = {
 };
 
 export const useTimeCalculator = () => {
+  const getTimeData = (): TimeCalculation => {
+    const stored = localStorage.getItem('settings');
+    if (stored) {
+      try {
+        const settings = JSON.parse(stored);
+        return settings.timeData || defaultTimeData;
+      } catch (error) {
+        console.error('Error loading time data:', error);
+      }
+    }
+    return defaultTimeData;
+  };
+
   const calculateOrderTime = (items: OrderItem[], designTime: number) => {
     // Calculate total production time in minutes
     let totalProductionTime = 0;
+    const timeData = getTimeData();
     
     items.forEach(item => {
       const prodTime = timeData.production[item.prenda];

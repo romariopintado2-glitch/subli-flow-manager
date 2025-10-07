@@ -65,7 +65,8 @@ export const AddOrderDialog = ({ onAddOrder }: AddOrderDialogProps) => {
   const handleSubmit = () => {
     if (nombrePedido.trim() && items.length > 0) {
       const totalDesignTimeHours = (tiempoDiseno + tiempoLista) / 60;
-      onAddOrder(nombrePedido, clienteId || undefined, items, totalDesignTimeHours, diseñador || undefined);
+      const finalDiseñador = diseñador && diseñador !== 'none' ? diseñador : undefined;
+      onAddOrder(nombrePedido, clienteId || undefined, items, totalDesignTimeHours, finalDiseñador);
       setNombrePedido('');
       setClienteId('');
       setDiseñador('');
@@ -169,13 +170,31 @@ export const AddOrderDialog = ({ onAddOrder }: AddOrderDialogProps) => {
 
             <div>
               <Label htmlFor="diseñador">Diseñador</Label>
-              <Input
-                id="diseñador"
+              <Select
                 value={diseñador}
-                onChange={(e) => setDiseñador(e.target.value)}
-                placeholder="Nombre del diseñador (opcional)"
-                className="mt-1"
-              />
+                onValueChange={setDiseñador}
+              >
+                <SelectTrigger className="mt-1">
+                  <SelectValue placeholder="Seleccionar diseñador (opcional)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Sin asignar</SelectItem>
+                  {(() => {
+                    const settingsStorage = localStorage.getItem('settings');
+                    if (settingsStorage) {
+                      try {
+                        const settings = JSON.parse(settingsStorage);
+                        return settings.diseñadores?.map((d: string) => (
+                          <SelectItem key={d} value={d}>{d}</SelectItem>
+                        ));
+                      } catch (error) {
+                        return null;
+                      }
+                    }
+                    return null;
+                  })()}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
