@@ -3,14 +3,16 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Plus, Trash2, Check, ChevronsUpDown } from 'lucide-react';
+import { Plus, Trash2, Check, ChevronsUpDown, UserPlus } from 'lucide-react';
 import { OrderItem } from '@/types/sublimation';
 import { Cliente } from '@/types/cliente';
 import { useTimeCalculator } from '@/hooks/useTimeCalculator';
 import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
 
 interface AddOrderDialogProps {
   onAddOrder: (nombrePedido: string, clienteId: string | undefined, items: OrderItem[], designTime: number, diseñador?: string) => void;
@@ -28,8 +30,16 @@ export const AddOrderDialog = ({ onAddOrder }: AddOrderDialogProps) => {
     { prenda: 'polo', cantidad: 1 }
   ]);
   const [clienteSearchOpen, setClienteSearchOpen] = useState(false);
+  const [showCreateClient, setShowCreateClient] = useState(false);
+  const [newClientData, setNewClientData] = useState({
+    nombre: '',
+    celular: '',
+    distrito: '',
+    descripcion: ''
+  });
   
   const { calculateOrderTime, formatTime } = useTimeCalculator();
+  const { toast } = useToast();
 
   useEffect(() => {
     if (open) {
@@ -60,6 +70,39 @@ export const AddOrderDialog = ({ onAddOrder }: AddOrderDialogProps) => {
     const newItems = [...items];
     newItems[index] = { ...newItems[index], [field]: value };
     setItems(newItems);
+  };
+
+  const handleCreateClient = () => {
+    if (!newClientData.nombre || !newClientData.celular || !newClientData.distrito) {
+      toast({
+        title: 'Error',
+        description: 'Por favor completa todos los campos requeridos',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    const newCliente: Cliente = {
+      id: crypto.randomUUID(),
+      ...newClientData,
+      fechaCreacion: new Date()
+    };
+
+    const clientesStorage = localStorage.getItem('clientes_database');
+    const existingClientes = clientesStorage ? JSON.parse(clientesStorage) : [];
+    const updatedClientes = [...existingClientes, newCliente];
+    localStorage.setItem('clientes_database', JSON.stringify(updatedClientes));
+
+    setClientes(updatedClientes);
+    setClienteId(newCliente.id);
+    setShowCreateClient(false);
+    setNewClientData({ nombre: '', celular: '', distrito: '', descripcion: '' });
+    setClienteSearchOpen(false);
+
+    toast({
+      title: 'Cliente creado',
+      description: 'El cliente se ha agregado correctamente'
+    });
   };
 
   const handleSubmit = () => {
@@ -127,7 +170,22 @@ export const AddOrderDialog = ({ onAddOrder }: AddOrderDialogProps) => {
                 <PopoverContent className="w-full p-0">
                   <Command>
                     <CommandInput placeholder="Buscar cliente..." />
-                    <CommandEmpty>No se encontró el cliente.</CommandEmpty>
+                    <CommandEmpty>
+                      <div className="p-4 text-center">
+                        <p className="text-sm text-muted-foreground mb-3">No se encontró el cliente</p>
+                        <Button
+                          size="sm"
+                          onClick={() => {
+                            setShowCreateClient(true);
+                            setClienteSearchOpen(false);
+                          }}
+                          className="gap-2"
+                        >
+                          <UserPlus className="w-4 h-4" />
+                          Crear Nuevo Cliente
+                        </Button>
+                      </div>
+                    </CommandEmpty>
                     <CommandGroup>
                       <CommandItem
                         value="none"
@@ -324,6 +382,62 @@ export const AddOrderDialog = ({ onAddOrder }: AddOrderDialogProps) => {
             </Button>
           </div>
         </div>
+
+        {/* Dialog para crear nuevo cliente */}
+        <Dialog open={showCreateClient} onOpenChange={setShowCreateClient}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Crear Nuevo Cliente</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="new-nombre">Nombre *</Label>
+                <Input
+                  id="new-nombre"
+                  value={newClientData.nombre}
+                  onChange={(e) => setNewClientData(prev => ({ ...prev, nombre: e.target.value }))}
+                  placeholder="Nombre completo del cliente"
+                />
+              </div>
+              <div>
+                <Label htmlFor="new-celular">Celular *</Label>
+                <Input
+                  id="new-celular"
+                  value={newClientData.celular}
+                  onChange={(e) => setNewClientData(prev => ({ ...prev, celular: e.target.value }))}
+                  placeholder="Ej: +51 999 999 999"
+                />
+              </div>
+              <div>
+                <Label htmlFor="new-distrito">Distrito *</Label>
+                <Input
+                  id="new-distrito"
+                  value={newClientData.distrito}
+                  onChange={(e) => setNewClientData(prev => ({ ...prev, distrito: e.target.value }))}
+                  placeholder="Ej: San Isidro"
+                />
+              </div>
+              <div>
+                <Label htmlFor="new-descripcion">Descripción</Label>
+                <Textarea
+                  id="new-descripcion"
+                  value={newClientData.descripcion}
+                  onChange={(e) => setNewClientData(prev => ({ ...prev, descripcion: e.target.value }))}
+                  placeholder="Información adicional del cliente"
+                  rows={3}
+                />
+              </div>
+              <div className="flex gap-3 justify-end">
+                <Button variant="outline" onClick={() => setShowCreateClient(false)}>
+                  Cancelar
+                </Button>
+                <Button onClick={handleCreateClient}>
+                  Crear y Asignar
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </DialogContent>
     </Dialog>
   );

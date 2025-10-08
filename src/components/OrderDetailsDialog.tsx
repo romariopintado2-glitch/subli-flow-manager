@@ -44,25 +44,40 @@ export const OrderDetailsDialog = ({ order, open, onOpenChange, onUpdateOrder }:
     setIsEditing(false);
   };
 
-  const handleFileUpload = (file: File, type: 'fotoLista') => {
-    if (!file.type.startsWith('image/')) {
+  const handleFileUpload = (files: FileList | null) => {
+    if (!files) return;
+
+    const currentPhotos = order.fotosLista || [];
+    if (currentPhotos.length + files.length > 4) {
       toast({
         title: 'Error',
-        description: 'Por favor selecciona una imagen válida',
+        description: 'Solo puedes subir hasta 4 fotos en total',
         variant: 'destructive'
       });
       return;
     }
 
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      onUpdateOrder(order.id, { fotoLista: reader.result as string });
-      toast({
-        title: 'Archivo cargado',
-        description: 'La foto de lista se ha guardado correctamente'
-      });
-    };
-    reader.readAsDataURL(file);
+    Array.from(files).forEach(file => {
+      if (!file.type.startsWith('image/')) {
+        toast({
+          title: 'Error',
+          description: 'Por favor selecciona solo imágenes válidas',
+          variant: 'destructive'
+        });
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const updatedPhotos = [...(order.fotosLista || []), reader.result as string];
+        onUpdateOrder(order.id, { fotosLista: updatedPhotos });
+        toast({
+          title: 'Foto cargada',
+          description: 'La foto de lista se ha guardado correctamente'
+        });
+      };
+      reader.readAsDataURL(file);
+    });
   };
 
   const handleAddLinkImpresion = () => {
@@ -87,9 +102,10 @@ export const OrderDetailsDialog = ({ order, open, onOpenChange, onUpdateOrder }:
   };
 
   const removeFile = (type: 'fotoLista' | 'archivoImpresion', index?: number) => {
-    if (type === 'fotoLista') {
-      onUpdateOrder(order.id, { fotoLista: undefined });
-    } else if (index !== undefined) {
+    if (type === 'fotoLista' && index !== undefined) {
+      const currentPhotos = order.fotosLista || [];
+      onUpdateOrder(order.id, { fotosLista: currentPhotos.filter((_, i) => i !== index) });
+    } else if (type === 'archivoImpresion' && index !== undefined) {
       const currentFiles = order.archivosImpresion || [];
       onUpdateOrder(order.id, { archivosImpresion: currentFiles.filter((_, i) => i !== index) });
     }
@@ -308,58 +324,71 @@ export const OrderDetailsDialog = ({ order, open, onOpenChange, onUpdateOrder }:
               Archivos
             </h3>
 
-            {/* Foto de Lista */}
+            {/* Fotos de Lista */}
             <div className="space-y-2">
-              <Label>Foto de Lista del Pedido</Label>
-              {order.fotoLista ? (
-                <div className="relative group">
-                  <img 
-                    src={order.fotoLista} 
-                    alt="Lista del pedido"
-                    className="w-full max-h-48 object-contain rounded-lg border cursor-pointer"
-                    onClick={() => setImageViewOpen(true)}
-                  />
-                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center gap-2">
-                    <Button
-                      size="icon"
-                      variant="secondary"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setImageViewOpen(true);
-                      }}
-                    >
-                      <Eye className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      size="icon"
-                      variant="destructive"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        removeFile('fotoLista');
-                      }}
-                    >
-                      <X className="w-4 h-4" />
-                    </Button>
-                  </div>
+              <Label>Fotos de Lista del Pedido (hasta 4 fotos)</Label>
+              {order.fotosLista && order.fotosLista.length > 0 && (
+                <div className="grid grid-cols-2 gap-3">
+                  {order.fotosLista.map((foto, index) => (
+                    <div key={index} className="relative group">
+                      <img 
+                        src={foto} 
+                        alt={`Lista del pedido ${index + 1}`}
+                        className="w-full h-32 object-cover rounded-lg border cursor-pointer"
+                        onClick={() => {
+                          setImageViewOpen(true);
+                        }}
+                      />
+                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center gap-2">
+                        <Button
+                          size="icon"
+                          variant="secondary"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setImageViewOpen(true);
+                          }}
+                        >
+                          <Eye className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          size="icon"
+                          variant="destructive"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            removeFile('fotoLista', index);
+                          }}
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              ) : (
-                <Label htmlFor="foto-lista" className="cursor-pointer">
-                  <div className="flex items-center justify-center gap-2 p-4 border-2 border-dashed rounded-lg hover:bg-muted/50 transition-colors">
-                    <Upload className="w-4 h-4" />
-                    <span className="text-sm">Subir foto de lista</span>
-                  </div>
-                </Label>
               )}
-              <Input
-                id="foto-lista"
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) handleFileUpload(file, 'fotoLista');
-                }}
-              />
+              
+              {(!order.fotosLista || order.fotosLista.length < 4) && (
+                <>
+                  <Label htmlFor="foto-lista" className="cursor-pointer">
+                    <div className="flex items-center justify-center gap-2 p-4 border-2 border-dashed rounded-lg hover:bg-muted/50 transition-colors">
+                      <Upload className="w-4 h-4" />
+                      <span className="text-sm">
+                        Subir fotos ({order.fotosLista?.length || 0}/4)
+                      </span>
+                    </div>
+                  </Label>
+                  <Input
+                    id="foto-lista"
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    className="hidden"
+                    onChange={(e) => {
+                      handleFileUpload(e.target.files);
+                      e.target.value = '';
+                    }}
+                  />
+                </>
+              )}
             </div>
 
             {/* Archivos de Impresión - Links */}
@@ -437,16 +466,21 @@ export const OrderDetailsDialog = ({ order, open, onOpenChange, onUpdateOrder }:
 
           {/* Image View Dialog */}
           <Dialog open={imageViewOpen} onOpenChange={setImageViewOpen}>
-            <DialogContent className="max-w-4xl">
+            <DialogContent className="max-w-6xl">
               <DialogHeader>
-                <DialogTitle>Foto de Lista del Pedido</DialogTitle>
+                <DialogTitle>Fotos de Lista del Pedido</DialogTitle>
               </DialogHeader>
-              {order.fotoLista && (
-                <img 
-                  src={order.fotoLista} 
-                  alt="Lista del pedido"
-                  className="w-full h-auto max-h-[80vh] object-contain"
-                />
+              {order.fotosLista && order.fotosLista.length > 0 && (
+                <div className="grid grid-cols-2 gap-4">
+                  {order.fotosLista.map((foto, index) => (
+                    <img 
+                      key={index}
+                      src={foto} 
+                      alt={`Lista del pedido ${index + 1}`}
+                      className="w-full h-auto max-h-[70vh] object-contain rounded-lg border"
+                    />
+                  ))}
+                </div>
               )}
             </DialogContent>
           </Dialog>

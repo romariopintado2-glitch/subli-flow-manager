@@ -8,11 +8,12 @@ import { CostsView } from '@/components/CostsView';
 import { ClientsDatabase } from '@/components/ClientsDatabase';
 import { InventoryView } from '@/components/InventoryView';
 import { SettingsView } from '@/components/SettingsView';
+import { HistorialPedidos } from '@/components/HistorialPedidos';
 import { Order, OrderItem } from '@/types/sublimation';
 import { useTimeCalculator } from '@/hooks/useTimeCalculator';
 import { usePasswordProtection } from '@/hooks/usePasswordProtection';
 import { PasswordProtect } from '@/components/PasswordProtect';
-import { BarChart3, Clock, Calendar, DollarSign, Users, Package, Settings } from 'lucide-react';
+import { BarChart3, Clock, Calendar, DollarSign, Users, Package, Settings, History } from 'lucide-react';
 
 const Index = () => {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -81,7 +82,7 @@ const Index = () => {
         </div>
 
         <Tabs defaultValue="orders" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-7 lg:w-auto lg:grid-cols-7">
+          <TabsList className="grid w-full grid-cols-8 lg:w-auto lg:grid-cols-8">
             <TabsTrigger value="orders" className="flex items-center gap-2">
               <BarChart3 className="w-4 h-4" />
               Pedidos
@@ -101,6 +102,10 @@ const Index = () => {
             <TabsTrigger value="clients" className="flex items-center gap-2">
               <Users className="w-4 h-4" />
               Clientes
+            </TabsTrigger>
+            <TabsTrigger value="historial" className="flex items-center gap-2">
+              <History className="w-4 h-4" />
+              Historial
             </TabsTrigger>
             <TabsTrigger value="settings" className="flex items-center gap-2">
               <Settings className="w-4 h-4" />
@@ -137,6 +142,10 @@ const Index = () => {
             >
               <ClientsDatabase />
             </PasswordProtect>
+          </TabsContent>
+
+          <TabsContent value="historial" className="space-y-6">
+            <HistorialPedidos />
           </TabsContent>
 
           <TabsContent value="settings" className="space-y-6">
