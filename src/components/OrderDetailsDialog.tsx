@@ -24,7 +24,7 @@ export const OrderDetailsDialog = ({ order, open, onOpenChange, onUpdateOrder }:
   const [isEditing, setIsEditing] = useState(false);
   const [descripcion, setDescripcion] = useState(order.descripcionPedido || '');
   const [cliente, setCliente] = useState<Cliente | null>(null);
-  const [imageViewOpen, setImageViewOpen] = useState(false);
+  const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
   const [linkImpresion, setLinkImpresion] = useState('');
   const [descripcionLink, setDescripcionLink] = useState('');
 
@@ -335,9 +335,7 @@ export const OrderDetailsDialog = ({ order, open, onOpenChange, onUpdateOrder }:
                         src={foto} 
                         alt={`Lista del pedido ${index + 1}`}
                         className="w-full h-32 object-cover rounded-lg border cursor-pointer"
-                        onClick={() => {
-                          setImageViewOpen(true);
-                        }}
+                        onClick={() => setSelectedImageIndex(index)}
                       />
                       <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center gap-2">
                         <Button
@@ -345,7 +343,7 @@ export const OrderDetailsDialog = ({ order, open, onOpenChange, onUpdateOrder }:
                           variant="secondary"
                           onClick={(e) => {
                             e.stopPropagation();
-                            setImageViewOpen(true);
+                            setSelectedImageIndex(index);
                           }}
                         >
                           <Eye className="w-4 h-4" />

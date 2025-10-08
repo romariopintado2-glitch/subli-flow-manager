@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AddOrderDialog } from '@/components/AddOrderDialog';
 import { OrdersTable } from '@/components/OrdersTable';
 import { ScheduleView } from '@/components/ScheduleView';
@@ -13,10 +14,11 @@ import { Order, OrderItem } from '@/types/sublimation';
 import { useTimeCalculator } from '@/hooks/useTimeCalculator';
 import { usePasswordProtection } from '@/hooks/usePasswordProtection';
 import { PasswordProtect } from '@/components/PasswordProtect';
-import { BarChart3, Clock, Calendar, DollarSign, Users, Package, Settings, History } from 'lucide-react';
+import { BarChart3, Clock, DollarSign, Users, Package, Settings, History } from 'lucide-react';
 
 const Index = () => {
   const [orders, setOrders] = useState<Order[]>([]);
+  const [activeTab, setActiveTab] = useState('orders');
   const { calculateOrderTime, calculateDeliveryTime } = useTimeCalculator();
   const { isAuthenticated, isLoading, authenticate, logout } = usePasswordProtection();
 
@@ -68,21 +70,41 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
       <div className="container mx-auto py-8 px-4">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-primary via-primary/80 to-primary/60 bg-clip-text text-transparent mb-2">
-            Sistema de Gestión de Sublimación
-          </h1>
-          <p className="text-muted-foreground text-lg">
-            Control completo de diseño, impresión, cortado y planchado
-          </p>
+        <div className="mb-8 flex items-start justify-between">
+          <div>
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-primary via-primary/80 to-primary/60 bg-clip-text text-transparent mb-2">
+              Sistema de Gestión de Sublimación
+            </h1>
+            <p className="text-muted-foreground text-lg">
+              Control completo de diseño, impresión, cortado y planchado
+            </p>
+          </div>
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="icon" className="h-10 w-10">
+                <Settings className="h-5 w-5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem onClick={() => setActiveTab('settings')}>
+                <Settings className="mr-2 h-4 w-4" />
+                Configuración
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setActiveTab('historial')}>
+                <History className="mr-2 h-4 w-4" />
+                Historial
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         <div className="mb-6">
           <AddOrderDialog onAddOrder={handleAddOrder} />
         </div>
 
-        <Tabs defaultValue="orders" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-8 lg:w-auto lg:grid-cols-8">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:grid-cols-5">
             <TabsTrigger value="orders" className="flex items-center gap-2">
               <BarChart3 className="w-4 h-4" />
               Pedidos
@@ -102,18 +124,6 @@ const Index = () => {
             <TabsTrigger value="clients" className="flex items-center gap-2">
               <Users className="w-4 h-4" />
               Clientes
-            </TabsTrigger>
-            <TabsTrigger value="historial" className="flex items-center gap-2">
-              <History className="w-4 h-4" />
-              Historial
-            </TabsTrigger>
-            <TabsTrigger value="settings" className="flex items-center gap-2">
-              <Settings className="w-4 h-4" />
-              Configuración
-            </TabsTrigger>
-            <TabsTrigger value="calendar" className="flex items-center gap-2">
-              <Calendar className="w-4 h-4" />
-              Calendario
             </TabsTrigger>
           </TabsList>
 
@@ -150,26 +160,6 @@ const Index = () => {
 
           <TabsContent value="settings" className="space-y-6">
             <SettingsView />
-          </TabsContent>
-
-          <TabsContent value="calendar" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Calendar className="w-5 h-5" />
-                  Vista de Calendario
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-12">
-                  <Calendar className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-medium mb-2">Vista de Calendario</h3>
-                  <p className="text-muted-foreground">
-                    Próximamente: Vista de calendario con entregas programadas
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
           </TabsContent>
         </Tabs>
       </div>
